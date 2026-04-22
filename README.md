@@ -57,7 +57,7 @@ Na aba Bot, ative:
 
 Use o link:
 
-https://discord.com/oauth2/authorize?client_id=SEU_CLIENT_ID&scope=bot&permissions=73728
+https://discord.com/oauth2/authorize?client_id=1494454596767322202&scope=bot&permissions=73728
 
 7. Obter ID do canal
 Ative o modo desenvolvedor no Discord:
