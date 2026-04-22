@@ -39,6 +39,7 @@ python -m venv venv
 
 3. Instalar dependências
 pip install discord.py
+
 🔐 Configuração do Bot
 
 4. Criar bot no Discord
