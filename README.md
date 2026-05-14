@@ -38,7 +38,7 @@ git clone https://github.com/brunobaa/BotCopiaMensagem.git
 python -m venv venv
 
 3. Instalar dependências
-pip install discord.py
+pip install discord.py python-dotenv
 
 🔐 Configuração do Bot
 
@@ -83,8 +83,13 @@ mensagens.json
 Formato:
 
 {
-  "usuario1": ["mensagem1", "mensagem2"],
-  "usuario2": ["mensagem1"]
+  "Bruno": [
+    {
+      "canal": "geral",
+      "mensagem": "Olá pessoal",
+      "data": "2026-05-14"
+    }
+  ]
 }
 
 👨‍💻 Autor:
