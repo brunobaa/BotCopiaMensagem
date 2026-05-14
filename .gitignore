@@ -1,3 +1,4 @@
 __pycache__/
 .env
 mensagens.json
+usuarios_sem_mensagem.json

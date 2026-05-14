@@ -1,69 +1,98 @@
 import discord
-from collections import defaultdict
 import json
 import os
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=".env")
+
+load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-CHANNELS_RAW = os.getenv("DISCORD_CHANNELS")
-
-print("TOKEN:", TOKEN)
-print("CHANNELS:", CHANNELS_RAW)
+DISCORD_CHANNELS = os.getenv("DISCORD_CHANNELS").split(",")
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 
 client = discord.Client(intents=intents)
 
-dados = {}
+mensagens_por_usuario = {}
+usuarios_que_falaram = set()
 
-# Processa canais da ENV
-canais = {}
+executado = False
 
-for item in CHANNELS_RAW.split(","):
-
-    item = item.strip()
-
-    if not item or ":" not in item:
-        continue
-
-    nome, canal_id = item.split(":", 1)
-
-    canais[nome.strip()] = int(canal_id.strip())
 
 @client.event
 async def on_ready():
+
+    global executado
+
+    # Impede execução duplicada
+    if executado:
+        return
+
+    executado = True
+
     print(f'Logado como {client.user}')
 
-    for nome_canal, canal_id in canais.items():
+    guild = client.guilds[0]
 
-        print(f"\nColetando mensagens de: {nome_canal}")
+    # Percorrer canais
+    for canal_info in DISCORD_CHANNELS:
 
-        canal = client.get_channel(canal_id)
+        nome_canal, canal_id = canal_info.split(":")
 
-        if canal is None:
-            print(f"Canal {nome_canal} não encontrado.")
-            continue
+        canal = await client.fetch_channel(int(canal_id))
 
-        mensagens_por_usuario = defaultdict(list)
+        print(f"\nColetando mensagens de: {canal.name}")
 
+        # Ler mensagens do canal
         async for msg in canal.history(limit=None):
 
             if msg.author.bot:
                 continue
 
-            mensagens_por_usuario[str(msg.author)].append({
+            if not msg.content.strip():
+                continue
+
+            nome_usuario = str(msg.author)
+
+            usuarios_que_falaram.add(msg.author.id)
+
+            if nome_usuario not in mensagens_por_usuario:
+                mensagens_por_usuario[nome_usuario] = []
+
+            mensagens_por_usuario[nome_usuario].append({
+                "canal": canal.name,
                 "mensagem": msg.content,
                 "data": str(msg.created_at)
             })
 
-        dados[nome_canal] = mensagens_por_usuario
-
+    # Salvar mensagens
     with open("mensagens.json", "w", encoding="utf-8") as f:
-        json.dump(dados, f, ensure_ascii=False, indent=4)
+        json.dump(mensagens_por_usuario, f, ensure_ascii=False, indent=4)
 
     print("\nMensagens salvas com sucesso!")
+
+    # Encontrar usuários sem mensagens
+    usuarios_sem_mensagem = []
+
+    async for membro in guild.fetch_members(limit=None):
+
+        if membro.bot:
+            continue
+
+        if membro.id not in usuarios_que_falaram:
+
+            usuarios_sem_mensagem.append({
+                "nome": str(membro),
+                "id": membro.id
+            })
+
+    # Salvar usuários sem mensagens
+    with open("usuarios_sem_mensagem.json", "w", encoding="utf-8") as f:
+        json.dump(usuarios_sem_mensagem, f, ensure_ascii=False, indent=4)
+
+    print("Usuários sem mensagens salvos com sucesso!")
+
     await client.close()
 
 
